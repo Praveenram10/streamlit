@@ -4,16 +4,30 @@ import random
 import psutil
 import matplotlib.pyplot as plt
 
-# Load instance types
+# Load instance types from JSON file
 def load_instances():
     with open("r3_instance_types.json", "r") as file:
         return json.load(file)
 
-# Extract system utilization
+# Extract real-time system utilization
 def get_system_utilization():
-    vCPUs = psutil.cpu_count(logical=True)  # Get total logical CPUs
-    memory = psutil.virtual_memory().total / (1024 ** 3)  # Convert bytes to GiB
-    return {"vCPUs": vCPUs, "memory_GiB": memory}
+    return {
+        "vCPUs": psutil.cpu_count(logical=True),  # Total logical CPUs
+        "memory_GiB": psutil.virtual_memory().total / (1024 ** 3),  # Convert bytes to GiB
+        "cpu_utilization": psutil.cpu_percent(interval=1),  # CPU usage %
+        "memory_utilization": psutil.virtual_memory().percent  # Memory usage %
+    }
+
+# Determine scaling decision based on actual utilization
+def suggest_required_resources(current_usage):
+    cpu_util = current_usage["cpu_utilization"]
+    mem_util = current_usage["memory_utilization"]
+
+    if cpu_util > 85 or mem_util > 85:
+        return "Upgrade"
+    elif cpu_util < 30 and mem_util < 30:
+        return "Downgrade"
+    return "Optimal"
 
 # Genetic Algorithm Functions
 def fitness(solution, instances, required_vCPUs, required_memory_GiB):
@@ -49,75 +63,48 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
         population = new_population
     return max(population, key=lambda x: fitness(x, instances, required_vCPUs, required_memory_GiB))
 
-# Scaling Analysis
-def scaling_analysis(current_usage, required_resources):
-    vCPU_diff = required_resources["vCPUs"] - current_usage["vCPUs"]
-    memory_diff = required_resources["memory_GiB"] - current_usage["memory_GiB"]
-    
-    if vCPU_diff > 0 or memory_diff > 0:
-        return "Upgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
-    elif vCPU_diff < -10 or memory_diff < -10:
-        return "Downgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
-    return "Optimal", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
-
-# Suggest required resources based on current usage and utilization
-def suggest_required_resources(current_usage):
-    # Calculate the utilization as a percentage of the system's total resources
-    utilization_vCPUs = current_usage["vCPUs"] / psutil.cpu_count(logical=False)  # Calculate CPU utilization percentage
-    utilization_memory = current_usage["memory_GiB"] / (psutil.virtual_memory().total / (1024 ** 3))  # Memory utilization percentage
-    
-    if utilization_vCPUs < 0.5 and utilization_memory < 0.5:
-        # If both vCPUs and memory are underused, suggest a downgrade or no change
-        required_vCPUs = current_usage["vCPUs"]  # Keep current vCPUs
-        required_memory_GiB = current_usage["memory_GiB"]  # Keep current memory
-    elif utilization_vCPUs > 0.9 or utilization_memory > 0.9:
-        # If utilization is high, suggest increasing resources by 10%
-        required_vCPUs = int(current_usage["vCPUs"] * 1.1)
-        required_memory_GiB = int(current_usage["memory_GiB"] * 1.1)
-    else:
-        # Otherwise, keep current resources
-        required_vCPUs = current_usage["vCPUs"]
-        required_memory_GiB = current_usage["memory_GiB"]
-    
-    return required_vCPUs, required_memory_GiB
-
 # Streamlit UI
 st.title("🚀 Cloud Cost Optimization with Genetic Algorithm")
 
 instances = load_instances()
 current_usage = get_system_utilization()
 
-# Automatically suggest required vCPUs and Memory
-required_vCPUs, required_memory_GiB = suggest_required_resources(current_usage)
+# Determine required resources based on utilization
+decision = suggest_required_resources(current_usage)
+if decision == "Upgrade":
+    required_vCPUs = int(current_usage["vCPUs"] * 1.5)  # Increase by 50%
+    required_memory_GiB = int(current_usage["memory_GiB"] * 1.5)
+elif decision == "Downgrade":
+    required_vCPUs = max(1, int(current_usage["vCPUs"] * 0.7))  # Decrease by 30%
+    required_memory_GiB = max(1, int(current_usage["memory_GiB"] * 0.7))
+else:
+    required_vCPUs = int(current_usage["vCPUs"])
+    required_memory_GiB = int(current_usage["memory_GiB"])
 
-# Sidebar Inputs
+# Sidebar Display
 st.sidebar.header("🔧 System Resources")
 st.sidebar.write(f"**Detected vCPUs:** {current_usage['vCPUs']}")
-st.sidebar.write(f"**Detected Memory (GiB):** {current_usage['memory_GiB']}")
-
-# Suggested Resources (Not editable)
-st.sidebar.write(f"**Suggested vCPUs (Required):** {required_vCPUs}")
-st.sidebar.write(f"**Suggested Memory (GiB, Required):** {required_memory_GiB}")
+st.sidebar.write(f"**Detected Memory (GiB):** {round(current_usage['memory_GiB'], 2)}")
+st.sidebar.write(f"**CPU Utilization:** {current_usage['cpu_utilization']}%")
+st.sidebar.write(f"**Memory Utilization:** {current_usage['memory_utilization']}%")
+st.sidebar.write(f"**📌 Suggested Action:** {decision}")
 
 # Utilization Graphs
 fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 
 # CPU Utilization Graph
-ax[0].bar(["Current", "Suggested"], [current_usage["vCPUs"], required_vCPUs], color=["blue", "red"])
-ax[0].set_title("vCPU Utilization")
-ax[0].set_ylabel("Count")
+ax[0].bar(["Current Utilization"], [current_usage["cpu_utilization"]], color="blue")
+ax[0].set_title("CPU Utilization (%)")
 
 # Memory Utilization Graph
-ax[1].bar(["Current", "Suggested"], [current_usage["memory_GiB"], required_memory_GiB], color=["blue", "red"])
-ax[1].set_title("Memory Utilization")
-ax[1].set_ylabel("GiB")
+ax[1].bar(["Current Utilization"], [current_usage["memory_utilization"]], color="red")
+ax[1].set_title("Memory Utilization (%)")
 
 st.pyplot(fig)
 
 # Run Optimization
 if st.button("⚡ Optimize Resources"):
     best_solution = genetic_algorithm(instances, required_vCPUs, required_memory_GiB)
-    decision, adjustment = scaling_analysis(current_usage, {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB})
     total_cost = sum(
         next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
         for instance, count in best_solution.items()
@@ -126,14 +113,12 @@ if st.button("⚡ Optimize Resources"):
     # Display Results
     st.subheader("📊 Optimization Results")
     st.write("**🚀 Scaling Decision:**", decision)
-    st.write("**📈 Adjustment Needed:**", adjustment)
     st.write("**🖥️ Best Instance Combination:**", best_solution)
     st.write("**💰 Total Cost (USD/hour):**", round(total_cost, 2))
 
-    # Additional Feedback Based on Scaling Decision
     if decision == "Upgrade":
-        st.warning("⚠️ Consider upgrading your cloud resources to meet the required vCPU and memory.")
+        st.warning("⚠️ High utilization detected. Suggested upgrade applied.")
     elif decision == "Downgrade":
-        st.success("✅ Your current resources exceed the required ones. Downgrading could save costs.")
+        st.success("✅ Underutilization detected. Suggested downgrade applied.")
     else:
-        st.info("✅ Your current resources are optimal for the task.")
+        st.info("✅ Resources are optimal.")
