@@ -48,7 +48,7 @@ def scaling_analysis(current_usage, required_resources):
         return "Downgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
     return "Optimal", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
 
-st.title("Genetic Algorithm for Cloud Cost Optimization")
+st.title("Cloud Cost Optimization")
 instances = load_instances()
 
 required_vCPUs = st.number_input("Required vCPUs", value=64, step=1)
