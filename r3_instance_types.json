@@ -1,0 +1,57 @@
+[
+    {
+        "instance_type": "r3.large",
+        "vCPUs": 2,
+        "memory_GiB": 15.25,
+        "instance_storage_GB": 32,
+        "network_bandwidth_Gbps": 1,
+        "ebs_bandwidth_Gbps": 1,
+        "on_demand_hourly_price_usd": 0.166,
+        "reserved_1_year_hourly_price_usd": 0.149,
+        "reserved_3_year_hourly_price_usd": 0.133
+    },
+    {
+        "instance_type": "r3.xlarge",
+        "vCPUs": 4,
+        "memory_GiB": 30.5,
+        "instance_storage_GB": 80,
+        "network_bandwidth_Gbps": 1,
+        "ebs_bandwidth_Gbps": 1,
+        "on_demand_hourly_price_usd": 0.332,
+        "reserved_1_year_hourly_price_usd": 0.298,
+        "reserved_3_year_hourly_price_usd": 0.266
+    },
+    {
+        "instance_type": "r3.2xlarge",
+        "vCPUs": 8,
+        "memory_GiB": 61,
+        "instance_storage_GB": 160,
+        "network_bandwidth_Gbps": 2,
+        "ebs_bandwidth_Gbps": 2,
+        "on_demand_hourly_price_usd": 0.665,
+        "reserved_1_year_hourly_price_usd": 0.597,
+        "reserved_3_year_hourly_price_usd": 0.532
+    },
+    {
+        "instance_type": "r3.4xlarge",
+        "vCPUs": 16,
+        "memory_GiB": 122,
+        "instance_storage_GB": 320,
+        "network_bandwidth_Gbps": 4,
+        "ebs_bandwidth_Gbps": 4,
+        "on_demand_hourly_price_usd": 1.33,
+        "reserved_1_year_hourly_price_usd": 1.194,
+        "reserved_3_year_hourly_price_usd": 1.064
+    },
+    {
+        "instance_type": "r3.8xlarge",
+        "vCPUs": 32,
+        "memory_GiB": 244,
+        "instance_storage_GB": 640,
+        "network_bandwidth_Gbps": 10,
+        "ebs_bandwidth_Gbps": 10,
+        "on_demand_hourly_price_usd": 2.66,
+        "reserved_1_year_hourly_price_usd": 2.388,
+        "reserved_3_year_hourly_price_usd": 2.128
+    }
+]
