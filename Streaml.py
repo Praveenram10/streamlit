@@ -64,7 +64,7 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
     return max(population, key=lambda x: fitness(x, instances, required_vCPUs, required_memory_GiB))
 
 # Streamlit UI
-st.title("🚀 Cloud Cost Optimization with Genetic Algorithm")
+st.title("Cloud Cost Optimization")
 
 instances = load_instances()
 current_usage = get_system_utilization()
@@ -82,7 +82,7 @@ else:
     required_memory_GiB = current_usage["memory_GiB"]
 
 # Sidebar System Info
-st.sidebar.header("🔧 System Resources")
+st.sidebar.header("System Resources")
 st.sidebar.write(f"**Detected vCPUs:** {current_usage['vCPUs']}")
 st.sidebar.write(f"**Detected Memory (GiB):** {current_usage['memory_GiB']}")
 st.sidebar.write(f"**CPU Utilization:** {current_usage['cpu_utilization']}%")
@@ -117,7 +117,7 @@ ax[1].legend()
 st.pyplot(fig)
 
 # Run Optimization
-if st.button("⚡ Optimize Resources"):
+if st.button("Optimize Resources"):
     best_solution = genetic_algorithm(instances, required_vCPUs, required_memory_GiB)
     total_cost = sum(
         next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
@@ -125,7 +125,7 @@ if st.button("⚡ Optimize Resources"):
     )
 
     # Display Results
-    st.subheader("📊 Optimization Results")
-    st.write("**🚀 Scaling Decision:**", decision)
-    st.write("**🖥️ Best Instance Combination:**", best_solution)
-    st.write("**💰 Total Cost (USD/hour):**", round(total_cost, 2))
+    st.subheader("Optimization Results")
+    st.write("**Scaling Decision:**", decision)
+    st.write("**Best Instance Combination:**", best_solution)
+    st.write("**Total Cost (USD/hour):**", round(total_cost, 2))
