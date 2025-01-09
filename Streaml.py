@@ -2,7 +2,6 @@ import streamlit as st
 import json
 import random
 import psutil
-import time
 import matplotlib.pyplot as plt
 
 # Load instance types
@@ -10,7 +9,13 @@ def load_instances():
     with open("r3_instance_types.json", "r") as file:
         return json.load(file)
 
-# Genetic Algorithm functions
+# Extract system utilization
+def get_system_utilization():
+    vCPUs = psutil.cpu_count(logical=True)  # Get total logical CPUs
+    memory = psutil.virtual_memory().total / (1024 ** 3)  # Convert bytes to GiB
+    return {"vCPUs": vCPUs, "memory_GiB": memory}
+
+# Genetic Algorithm Functions
 def fitness(solution, instances, required_vCPUs, required_memory_GiB):
     total_vCPUs, total_memory, total_cost = 0, 0, 0
     for instance, count in solution.items():
@@ -44,6 +49,7 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
         population = new_population
     return max(population, key=lambda x: fitness(x, instances, required_vCPUs, required_memory_GiB))
 
+# Scaling Analysis
 def scaling_analysis(current_usage, required_resources):
     vCPU_diff = required_resources["vCPUs"] - current_usage["vCPUs"]
     memory_diff = required_resources["memory_GiB"] - current_usage["memory_GiB"]
@@ -53,75 +59,47 @@ def scaling_analysis(current_usage, required_resources):
         return "Downgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
     return "Optimal", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
 
-# Function to get real-time system usage
-def get_system_usage():
-    cpu_usage = psutil.cpu_percent(interval=1)
-    total_vCPUs = psutil.cpu_count(logical=True)
-    memory_info = psutil.virtual_memory()
-    memory_used = memory_info.used / (1024 ** 3)
-    total_memory = memory_info.total / (1024 ** 3)
-    return {
-        "current_vCPUs": int((cpu_usage / 100) * total_vCPUs),
-        "current_memory_GiB": round(memory_used, 2),
-        "total_vCPUs": total_vCPUs,
-        "total_memory_GiB": round(total_memory, 2),
-        "cpu_usage_percent": cpu_usage,
-        "memory_usage_percent": memory_info.percent,
-    }
-
 # Streamlit UI
-st.set_page_config(page_title="Cloud Cost Optimization", layout="wide")
+st.title("🚀 Cloud Cost Optimization with Genetic Algorithm")
 
-st.title("🌩️ Cloud Cost Optimization using Genetic Algorithm")
-st.markdown("This application dynamically determines the best cloud instance configuration to optimize costs based on your system's real-time utilization.")
+instances = load_instances()
+current_usage = get_system_utilization()
 
-# Get real-time system usage
-usage = get_system_usage()
+# Sidebar Inputs
+st.sidebar.header("🔧 System Resources")
+st.sidebar.write(f"**Detected vCPUs:** {current_usage['vCPUs']}")
+st.sidebar.write(f"**Detected Memory (GiB):** {current_usage['memory_GiB']}")
 
-# Layout using columns
-col1, col2 = st.columns(2)
+required_vCPUs = st.sidebar.number_input("Required vCPUs", value=int(current_usage['vCPUs']), step=1)
+required_memory_GiB = st.sidebar.number_input("Required Memory (GiB)", value=int(current_usage['memory_GiB']), step=1)
+
+# Utilization Graphs
+fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 
 # CPU Utilization Graph
-with col1:
-    st.subheader("🔵 CPU Utilization")
-    fig, ax = plt.subplots()
-    ax.bar(["Used", "Total"], [usage["current_vCPUs"], usage["total_vCPUs"]], color=["blue", "gray"])
-    ax.set_ylabel("vCPUs")
-    ax.set_ylim(0, usage["total_vCPUs"])
-    st.pyplot(fig)
+ax[0].bar(["Current", "Required"], [current_usage["vCPUs"], required_vCPUs], color=["blue", "red"])
+ax[0].set_title("vCPU Utilization")
+ax[0].set_ylabel("Count")
 
 # Memory Utilization Graph
-with col2:
-    st.subheader("🟢 Memory Utilization")
-    fig, ax = plt.subplots()
-    ax.bar(["Used", "Total"], [usage["current_memory_GiB"], usage["total_memory_GiB"]], color=["green", "gray"])
-    ax.set_ylabel("Memory (GiB)")
-    ax.set_ylim(0, usage["total_memory_GiB"])
-    st.pyplot(fig)
+ax[1].bar(["Current", "Required"], [current_usage["memory_GiB"], required_memory_GiB], color=["blue", "red"])
+ax[1].set_title("Memory Utilization")
+ax[1].set_ylabel("GiB")
 
-# Automatically determine required vCPUs and memory (with a buffer)
-buffer_percentage = st.slider("⚙️ Buffer Percentage for Scaling", min_value=10, max_value=50, value=20, step=5)
+st.pyplot(fig)
 
-required_vCPUs = int(usage["current_vCPUs"] * (1 + buffer_percentage / 100))
-required_memory_GiB = round(usage["current_memory_GiB"] * (1 + buffer_percentage / 100), 2)
-
-st.subheader("📌 Suggested Cloud Resources")
-st.write(f"✅ **Required vCPUs:** {required_vCPUs}")
-st.write(f"✅ **Required Memory (GiB):** {required_memory_GiB}")
-
-if st.button("🚀 Run Optimization"):
-    instances = load_instances()
+# Run Optimization
+if st.button("⚡ Optimize Resources"):
     best_solution = genetic_algorithm(instances, required_vCPUs, required_memory_GiB)
-    decision, adjustment = scaling_analysis(usage, {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB})
+    decision, adjustment = scaling_analysis(current_usage, {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB})
     total_cost = sum(
         next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
         for instance, count in best_solution.items()
     )
-    
-    st.subheader("📊 Optimization Results")
-    st.write("🔹 **Scaling Decision:**", f"**{decision}**")
-    st.write("🔹 **Adjustment Needed:**", adjustment)
-    st.write("🔹 **Best Instance Combination:**")
-    st.json(best_solution)
-    st.write(f"💰 **Total Cost (USD/hour):** ${total_cost:.2f}")
 
+    # Display Results
+    st.subheader("📊 Optimization Results")
+    st.write("**🚀 Scaling Decision:**", decision)
+    st.write("**📈 Adjustment Needed:**", adjustment)
+    st.write("**🖥️ Best Instance Combination:**", best_solution)
+    st.write("**💰 Total Cost (USD/hour):**", round(total_cost, 2))
