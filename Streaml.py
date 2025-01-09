@@ -53,6 +53,7 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
 def scaling_analysis(current_usage, required_resources):
     vCPU_diff = required_resources["vCPUs"] - current_usage["vCPUs"]
     memory_diff = required_resources["memory_GiB"] - current_usage["memory_GiB"]
+    
     if vCPU_diff > 0 or memory_diff > 0:
         return "Upgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
     elif vCPU_diff < -10 or memory_diff < -10:
@@ -103,3 +104,11 @@ if st.button("⚡ Optimize Resources"):
     st.write("**📈 Adjustment Needed:**", adjustment)
     st.write("**🖥️ Best Instance Combination:**", best_solution)
     st.write("**💰 Total Cost (USD/hour):**", round(total_cost, 2))
+
+    # Additional Feedback Based on Scaling Decision
+    if decision == "Upgrade":
+        st.warning("⚠️ Consider upgrading your cloud resources to meet the required vCPU and memory.")
+    elif decision == "Downgrade":
+        st.success("✅ Your current resources exceed the required ones. Downgrading could save costs.")
+    else:
+        st.info("✅ Your current resources are optimal for the task.")
