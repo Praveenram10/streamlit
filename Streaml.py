@@ -60,30 +60,55 @@ def scaling_analysis(current_usage, required_resources):
         return "Downgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
     return "Optimal", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
 
+# Suggest required resources based on current usage and utilization
+def suggest_required_resources(current_usage):
+    # Calculate the utilization as a percentage of the system's total resources
+    utilization_vCPUs = current_usage["vCPUs"] / psutil.cpu_count(logical=False)  # Calculate CPU utilization percentage
+    utilization_memory = current_usage["memory_GiB"] / (psutil.virtual_memory().total / (1024 ** 3))  # Memory utilization percentage
+    
+    if utilization_vCPUs < 0.5 and utilization_memory < 0.5:
+        # If both vCPUs and memory are underused, suggest a downgrade or no change
+        required_vCPUs = current_usage["vCPUs"]  # Keep current vCPUs
+        required_memory_GiB = current_usage["memory_GiB"]  # Keep current memory
+    elif utilization_vCPUs > 0.9 or utilization_memory > 0.9:
+        # If utilization is high, suggest increasing resources by 10%
+        required_vCPUs = int(current_usage["vCPUs"] * 1.1)
+        required_memory_GiB = int(current_usage["memory_GiB"] * 1.1)
+    else:
+        # Otherwise, keep current resources
+        required_vCPUs = current_usage["vCPUs"]
+        required_memory_GiB = current_usage["memory_GiB"]
+    
+    return required_vCPUs, required_memory_GiB
+
 # Streamlit UI
 st.title("🚀 Cloud Cost Optimization with Genetic Algorithm")
 
 instances = load_instances()
 current_usage = get_system_utilization()
 
+# Automatically suggest required vCPUs and Memory
+required_vCPUs, required_memory_GiB = suggest_required_resources(current_usage)
+
 # Sidebar Inputs
 st.sidebar.header("🔧 System Resources")
 st.sidebar.write(f"**Detected vCPUs:** {current_usage['vCPUs']}")
 st.sidebar.write(f"**Detected Memory (GiB):** {current_usage['memory_GiB']}")
 
-required_vCPUs = st.sidebar.number_input("Required vCPUs", value=int(current_usage['vCPUs']), step=1)
-required_memory_GiB = st.sidebar.number_input("Required Memory (GiB)", value=int(current_usage['memory_GiB']), step=1)
+# Suggested Resources (Not editable)
+st.sidebar.write(f"**Suggested vCPUs (Required):** {required_vCPUs}")
+st.sidebar.write(f"**Suggested Memory (GiB, Required):** {required_memory_GiB}")
 
 # Utilization Graphs
 fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 
 # CPU Utilization Graph
-ax[0].bar(["Current", "Required"], [current_usage["vCPUs"], required_vCPUs], color=["blue", "red"])
+ax[0].bar(["Current", "Suggested"], [current_usage["vCPUs"], required_vCPUs], color=["blue", "red"])
 ax[0].set_title("vCPU Utilization")
 ax[0].set_ylabel("Count")
 
 # Memory Utilization Graph
-ax[1].bar(["Current", "Required"], [current_usage["memory_GiB"], required_memory_GiB], color=["blue", "red"])
+ax[1].bar(["Current", "Suggested"], [current_usage["memory_GiB"], required_memory_GiB], color=["blue", "red"])
 ax[1].set_title("Memory Utilization")
 ax[1].set_ylabel("GiB")
 
