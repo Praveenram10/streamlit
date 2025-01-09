@@ -4,21 +4,21 @@ import random
 import psutil
 import matplotlib.pyplot as plt
 
-# Load instance types from JSON file
+# Load instance types
 def load_instances():
     with open("r3_instance_types.json", "r") as file:
         return json.load(file)
 
-# Extract real-time system utilization
+# Extract system utilization
 def get_system_utilization():
     return {
-        "vCPUs": psutil.cpu_count(logical=True),  # Total logical CPUs
-        "memory_GiB": psutil.virtual_memory().total / (1024 ** 3),  # Convert bytes to GiB
-        "cpu_utilization": psutil.cpu_percent(interval=1),  # CPU usage %
-        "memory_utilization": psutil.virtual_memory().percent  # Memory usage %
+        "vCPUs": psutil.cpu_count(logical=True),
+        "memory_GiB": psutil.virtual_memory().total / (1024 ** 3),
+        "cpu_utilization": psutil.cpu_percent(interval=1),
+        "memory_utilization": psutil.virtual_memory().percent
     }
 
-# Determine scaling decision based on actual utilization
+# Scaling Decision Logic
 def suggest_required_resources(current_usage):
     cpu_util = current_usage["cpu_utilization"]
     mem_util = current_usage["memory_utilization"]
@@ -68,37 +68,51 @@ st.title("🚀 Cloud Cost Optimization with Genetic Algorithm")
 
 instances = load_instances()
 current_usage = get_system_utilization()
-
-# Determine required resources based on utilization
 decision = suggest_required_resources(current_usage)
+
+# Determine required vCPUs and Memory based on decision
 if decision == "Upgrade":
-    required_vCPUs = int(current_usage["vCPUs"] * 1.5)  # Increase by 50%
+    required_vCPUs = int(current_usage["vCPUs"] * 1.5)
     required_memory_GiB = int(current_usage["memory_GiB"] * 1.5)
 elif decision == "Downgrade":
-    required_vCPUs = max(1, int(current_usage["vCPUs"] * 0.7))  # Decrease by 30%
+    required_vCPUs = max(1, int(current_usage["vCPUs"] * 0.7))
     required_memory_GiB = max(1, int(current_usage["memory_GiB"] * 0.7))
 else:
-    required_vCPUs = int(current_usage["vCPUs"])
-    required_memory_GiB = int(current_usage["memory_GiB"])
+    required_vCPUs = current_usage["vCPUs"]
+    required_memory_GiB = current_usage["memory_GiB"]
 
-# Sidebar Display
+# Sidebar System Info
 st.sidebar.header("🔧 System Resources")
 st.sidebar.write(f"**Detected vCPUs:** {current_usage['vCPUs']}")
-st.sidebar.write(f"**Detected Memory (GiB):** {round(current_usage['memory_GiB'], 2)}")
+st.sidebar.write(f"**Detected Memory (GiB):** {current_usage['memory_GiB']}")
 st.sidebar.write(f"**CPU Utilization:** {current_usage['cpu_utilization']}%")
 st.sidebar.write(f"**Memory Utilization:** {current_usage['memory_utilization']}%")
-st.sidebar.write(f"**📌 Suggested Action:** {decision}")
+st.sidebar.write(f"**Scaling Decision:** {decision}")
 
-# Utilization Graphs
-fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+# Line Graph for Utilization vs. Optimal Threshold
+fig, ax = plt.subplots(1, 2, figsize=(12, 5))
 
-# CPU Utilization Graph
-ax[0].bar(["Current Utilization"], [current_usage["cpu_utilization"]], color="blue")
-ax[0].set_title("CPU Utilization (%)")
+# Simulated data for visualization
+time_steps = list(range(1, 11))  # Simulated 10 time points
+cpu_usage_data = [random.uniform(20, 90) for _ in time_steps]
+mem_usage_data = [random.uniform(20, 90) for _ in time_steps]
+optimal_line = [85] * len(time_steps)  # Optimal upgrade threshold
 
-# Memory Utilization Graph
-ax[1].bar(["Current Utilization"], [current_usage["memory_utilization"]], color="red")
-ax[1].set_title("Memory Utilization (%)")
+# CPU Utilization Line Graph
+ax[0].plot(time_steps, cpu_usage_data, label="CPU Utilization", color="blue", marker="o")
+ax[0].plot(time_steps, optimal_line, label="Optimal Threshold (85%)", color="red", linestyle="dashed")
+ax[0].set_title("CPU Utilization Over Time")
+ax[0].set_xlabel("Time")
+ax[0].set_ylabel("Utilization (%)")
+ax[0].legend()
+
+# Memory Utilization Line Graph
+ax[1].plot(time_steps, mem_usage_data, label="Memory Utilization", color="green", marker="o")
+ax[1].plot(time_steps, optimal_line, label="Optimal Threshold (85%)", color="red", linestyle="dashed")
+ax[1].set_title("Memory Utilization Over Time")
+ax[1].set_xlabel("Time")
+ax[1].set_ylabel("Utilization (%)")
+ax[1].legend()
 
 st.pyplot(fig)
 
@@ -115,10 +129,3 @@ if st.button("⚡ Optimize Resources"):
     st.write("**🚀 Scaling Decision:**", decision)
     st.write("**🖥️ Best Instance Combination:**", best_solution)
     st.write("**💰 Total Cost (USD/hour):**", round(total_cost, 2))
-
-    if decision == "Upgrade":
-        st.warning("⚠️ High utilization detected. Suggested upgrade applied.")
-    elif decision == "Downgrade":
-        st.success("✅ Underutilization detected. Suggested downgrade applied.")
-    else:
-        st.info("✅ Resources are optimal.")
