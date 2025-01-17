@@ -168,8 +168,8 @@
         "ebs_bandwidth_Gbps": "Up to 2085",
         "cpu_credits_per_hour": 12,
         "on_demand_hourly_price_usd": 0.0084
-    }
-{
+    },
+    {
         "instance_type": "t4g.small",
         "vCPUs": 2,
         "memory_GiB": 2,
