@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 import random
-import psutil
 import matplotlib.pyplot as plt
 
 def load_instances():
@@ -15,10 +14,14 @@ def fitness(solution, instances, required_vCPUs, required_memory_GiB):
         total_vCPUs += instance_data["vCPUs"] * count
         total_memory += instance_data["memory_GiB"] * count
         total_cost += instance_data["on_demand_hourly_price_usd"] * count
-    return 1 / total_cost if total_vCPUs >= required_vCPUs and total_memory >= required_memory_GiB else 0
+    
+    if total_vCPUs < required_vCPUs or total_memory < required_memory_GiB:
+        return 0  # Invalid solution (not enough resources)
+    
+    return 1 / total_cost  
 
 def generate_solution(instances):
-    return {instance["instance_type"]: random.randint(0, 10) for instance in instances}
+    return {instance["instance_type"]: random.randint(0, 3) for instance in instances}
 
 def crossover(parent1, parent2):
     return {key: parent1[key] if random.random() < 0.5 else parent2[key] for key in parent1.keys()}
@@ -51,11 +54,16 @@ def scaling_analysis(current_config, avg_utilization, instances):
     optimal_cost = calculate_cost(optimal_config, instances)
 
     savings = current_cost - optimal_cost
+
+    utilization_threshold = 80  
     decision = "Optimal"
-    if savings > 0:
-        decision = "Downgrade"
-    elif savings < -10:
+
+    if avg_utilization["vCPUs"] >= utilization_threshold or avg_utilization["memory_GiB"] >= utilization_threshold:
         decision = "Upgrade"
+    elif avg_utilization["vCPUs"] <= 40 and avg_utilization["memory_GiB"] <= 40:
+        decision = "Downgrade"
+    elif savings > 5:  # Only suggest a downgrade if cost savings are significant
+        decision = "Downgrade"
 
     return decision, optimal_config, optimal_cost, savings
 
@@ -97,9 +105,9 @@ if st.button("⚡ Optimize Resources"):
     st.write(f"**💰 Optimized Cost (USD/hour):** {optimal_cost:.2f}")
     st.write(f"**📉 Savings:** {savings:.2f} USD/hour")
 
-    if savings > 0:
+    if decision == "Downgrade":
         st.success(f"🎉 You can save **${savings:.2f}/hour** by switching to the suggested configuration!")
-    elif savings < 0:
-        st.warning(f"⚠️ An upgrade is recommended, which will increase costs by **${-savings:.2f}/hour**.")
+    elif decision == "Upgrade":
+        st.warning(f"⚠️ An upgrade is recommended due to high resource utilization.")
     else:
         st.info("✅ Your current configuration is already optimal!")
