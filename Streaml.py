@@ -94,7 +94,6 @@ if st.button("⚡ Optimize Resources"):
     decision, optimal_config, optimal_cost, savings = scaling_analysis(current_config, avg_utilization, instances)
 
     st.subheader("📊 Optimization Results")
-    st.write(f"**🚀 Scaling Decision:** {decision}")
     st.write(f"**💰 Current Cost (USD/hour):** {calculate_cost(current_config, instances):.2f}")
     st.write(f"**🔍 Optimal Configuration:** {optimal_config}")
     st.write(f"**💰 Optimized Cost (USD/hour):** {optimal_cost:.2f}")
