@@ -4,12 +4,10 @@ import random
 import psutil
 import matplotlib.pyplot as plt
 
-# Load instance types
 def load_instances():
     with open("r3_instance_types.json", "r") as file:
         return json.load(file)
 
-# Fitness Function (Cost-Based Optimization)
 def fitness(solution, instances, required_vCPUs, required_memory_GiB):
     total_vCPUs, total_memory, total_cost = 0, 0, 0
     for instance, count in solution.items():
@@ -19,7 +17,6 @@ def fitness(solution, instances, required_vCPUs, required_memory_GiB):
         total_cost += instance_data["on_demand_hourly_price_usd"] * count
     return 1 / total_cost if total_vCPUs >= required_vCPUs and total_memory >= required_memory_GiB else 0
 
-# Genetic Algorithm Functions
 def generate_solution(instances):
     return {instance["instance_type"]: random.randint(0, 10) for instance in instances}
 
@@ -44,12 +41,10 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
         population = new_population
     return max(population, key=lambda x: fitness(x, instances, required_vCPUs, required_memory_GiB))
 
-# Cost Calculation
 def calculate_cost(configuration, instances):
     return sum(next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
                for instance, count in configuration.items())
-
-# Decision Logic
+    
 def scaling_analysis(current_config, avg_utilization, instances):
     current_cost = calculate_cost(current_config, instances)
     optimal_config = genetic_algorithm(instances, avg_utilization["vCPUs"], avg_utilization["memory_GiB"])
@@ -64,49 +59,40 @@ def scaling_analysis(current_config, avg_utilization, instances):
 
     return decision, optimal_config, optimal_cost, savings
 
-# Streamlit UI
 st.title("🔧 **Cloud Cost Optimization Using Genetic Algorithm**")
 
 instances = load_instances()
 
-# **Step 1: Input Current Configuration**
 st.sidebar.header("🛠️ Current Configuration")
 current_cpu = st.sidebar.number_input("Current vCPUs", min_value=1, value=8)
 current_memory = st.sidebar.number_input("Current Memory (GiB)", min_value=1, value=16)
 current_instance_family = st.sidebar.text_input("Current Instance Family", "r3.large")
 
-# **Step 2: Input Utilization Data**
 st.sidebar.header("📊 Utilization Data (N Days Avg)")
 avg_cpu_utilization = st.sidebar.number_input("Avg CPU Utilization (%)", min_value=1, max_value=100, value=65)
 avg_memory_utilization = st.sidebar.number_input("Avg Memory Utilization (%)", min_value=1, max_value=100, value=70)
 
-# Convert utilization % into required resources
 required_vCPUs = int((avg_cpu_utilization / 100) * current_cpu)
 required_memory_GiB = int((avg_memory_utilization / 100) * current_memory)
 
-# **Step 3: Visualization**
 fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 
-# CPU Utilization Graph
 ax[0].bar(["Current", "Required"], [current_cpu, required_vCPUs], color=["blue", "red"])
 ax[0].set_title("CPU Utilization")
 ax[0].set_ylabel("vCPUs")
 
-# Memory Utilization Graph
 ax[1].bar(["Current", "Required"], [current_memory, required_memory_GiB], color=["blue", "red"])
 ax[1].set_title("Memory Utilization")
 ax[1].set_ylabel("GiB")
 
 st.pyplot(fig)
 
-# **Step 4: Run Optimization**
 if st.button("⚡ Optimize Resources"):
-    current_config = {current_instance_family: 1}  # Assume 1 instance of current family
+    current_config = {current_instance_family: 1}
     avg_utilization = {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB}
 
     decision, optimal_config, optimal_cost, savings = scaling_analysis(current_config, avg_utilization, instances)
 
-    # Display Results
     st.subheader("📊 Optimization Results")
     st.write(f"**🚀 Scaling Decision:** {decision}")
     st.write(f"**💰 Current Cost (USD/hour):** {calculate_cost(current_config, instances):.2f}")
