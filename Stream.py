@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import random
+import matplotlib.pyplot as plt
 
 def load_instances():
     with open("r3_instance_types.json", "r") as file:
@@ -51,19 +52,34 @@ def scaling_analysis(current_usage, required_resources):
 st.title("Cloud Cost Optimization")
 instances = load_instances()
 
-required_vCPUs = st.number_input("Required vCPUs", value=64, step=1)
-required_memory_GiB = st.number_input("Required Memory (GiB)", value=128, step=1)
-current_usage = {"vCPUs": st.number_input("Current vCPUs", value=10, step=1),
-                 "memory_GiB": st.number_input("Current Memory (GiB)", value=127, step=1)}
+current_vCPUs = st.number_input("Current vCPUs", value=10, step=1)
+current_memory_GiB = st.number_input("Current Memory (GiB)", value=127, step=1)
+instance_family = st.text_input("Instance Family (e.g., r3, m5)", value="r3")
+
+cpu_utilization = st.number_input("CPU Utilization (%) - N Days Avg", value=70, step=1)
+memory_utilization = st.number_input("Memory Utilization (%) - N Days Avg", value=80, step=1)
+
+required_vCPUs = int(current_vCPUs * (cpu_utilization / 100))
+required_memory_GiB = int(current_memory_GiB * (memory_utilization / 100))
 
 if st.button("Run Optimization"):
     best_solution = genetic_algorithm(instances, required_vCPUs, required_memory_GiB)
-    decision, adjustment = scaling_analysis(current_usage, {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB})
+    decision, adjustment = scaling_analysis({"vCPUs": current_vCPUs, "memory_GiB": current_memory_GiB},
+                                            {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB})
     total_cost = sum(next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
                      for instance, count in best_solution.items())
-    
+
     st.subheader("Results")
     st.write("**Scaling Decision:**", decision)
     st.write("**Adjustment Needed:**", adjustment)
     st.write("**Best Instance Combination:**", best_solution)
     st.write("**Total Cost (USD/hour):**", total_cost)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(["Current", "Optimized"], [current_vCPUs, required_vCPUs], marker='o', linestyle='-', label="vCPUs")
+    ax.plot(["Current", "Optimized"], [current_memory_GiB, required_memory_GiB], marker='o', linestyle='-', label="Memory (GiB)")
+    ax.set_xlabel("Configuration")
+    ax.set_ylabel("Resources")
+    ax.set_title("Current vs Optimized Resource Allocation")
+    ax.legend()
+    st.pyplot(fig)
