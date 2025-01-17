@@ -8,21 +8,20 @@ def load_instances():
         return json.load(file)
 
 def fitness(solution, instances, required_vCPUs, required_memory_GiB):
-    total_vCPUs, total_memory, total_cost, instance_count = 0, 0, 0, 0
+    total_vCPUs, total_memory, total_cost = 0, 0, 0
     for instance, count in solution.items():
         instance_data = next(i for i in instances if i["instance_type"] == instance)
         total_vCPUs += instance_data["vCPUs"] * count
         total_memory += instance_data["memory_GiB"] * count
         total_cost += instance_data["on_demand_hourly_price_usd"] * count
-        instance_count += count
-    
-    if total_vCPUs < required_vCPUs or total_memory < required_memory_GiB:
-        return 0  # Invalid solution
 
-    return (1 / total_cost) * (total_vCPUs / required_vCPUs) * (total_memory / required_memory_GiB) * (1 / instance_count)
+    if total_vCPUs < required_vCPUs or total_memory < required_memory_GiB:
+        return 0  
+
+    return (1 / total_cost) * (total_vCPUs / required_vCPUs) * (total_memory / required_memory_GiB)
 
 def generate_solution(instances):
-    return {instance["instance_type"]: random.randint(0, 3) for instance in instances}
+    return {instance["instance_type"]: random.randint(0, 2) for instance in instances} 
 
 def crossover(parent1, parent2):
     return {key: parent1[key] if random.random() < 0.5 else parent2[key] for key in parent1.keys()}
@@ -51,7 +50,7 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
                        for instance, count in best_config.items())
 
     if total_vCPUs < required_vCPUs or total_memory < required_memory_GiB:
-        return None  # Reject configurations that don't meet requirements
+        return None  
 
     return best_config
 
@@ -70,12 +69,13 @@ def scaling_analysis(current_config, avg_utilization, instances):
     savings = current_cost - optimal_cost
 
     utilization_threshold = 80  
-    decision = "Optimal"
 
     if optimal_cost > current_cost:
         decision = "Upgrade"
-    elif savings > 5 and avg_utilization["vCPUs"] < 40 and avg_utilization["memory_GiB"] < 40:  
+    elif savings > 5 and avg_utilization["vCPUs"] < utilization_threshold and avg_utilization["memory_GiB"] < utilization_threshold:
         decision = "Downgrade"
+    else:
+        decision = "Optimal"
 
     return decision, optimal_config, optimal_cost, savings
 
