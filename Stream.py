@@ -16,9 +16,9 @@ def fitness(solution, instances, required_vCPUs, required_memory_GiB):
         total_cost += instance_data["on_demand_hourly_price_usd"] * count
     
     if total_vCPUs < required_vCPUs or total_memory < required_memory_GiB:
-        return 0  # Invalid solution (not enough resources)
+        return 0  # Completely invalid solution (not enough resources)
     
-    return 1 / total_cost  
+    return (1 / total_cost) * (total_vCPUs / required_vCPUs) * (total_memory / required_memory_GiB)
 
 def generate_solution(instances):
     return {instance["instance_type"]: random.randint(0, 3) for instance in instances}
@@ -42,7 +42,17 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
             child = mutate(crossover(p1, p2), mutation_rate)
             new_population.append(child)
         population = new_population
-    return max(population, key=lambda x: fitness(x, instances, required_vCPUs, required_memory_GiB))
+    best_config = max(population, key=lambda x: fitness(x, instances, required_vCPUs, required_memory_GiB))
+
+    total_vCPUs = sum(next(i["vCPUs"] for i in instances if i["instance_type"] == instance) * count
+                      for instance, count in best_config.items())
+    total_memory = sum(next(i["memory_GiB"] for i in instances if i["instance_type"] == instance) * count
+                       for instance, count in best_config.items())
+
+    if total_vCPUs < required_vCPUs or total_memory < required_memory_GiB:
+        return None  # Reject configurations that don't meet requirements
+
+    return best_config
 
 def calculate_cost(configuration, instances):
     return sum(next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
@@ -51,8 +61,11 @@ def calculate_cost(configuration, instances):
 def scaling_analysis(current_config, avg_utilization, instances):
     current_cost = calculate_cost(current_config, instances)
     optimal_config = genetic_algorithm(instances, avg_utilization["vCPUs"], avg_utilization["memory_GiB"])
-    optimal_cost = calculate_cost(optimal_config, instances)
 
+    if not optimal_config:
+        return "Upgrade", None, current_cost, 0  # If no valid optimization exists, recommend upgrade
+
+    optimal_cost = calculate_cost(optimal_config, instances)
     savings = current_cost - optimal_cost
 
     utilization_threshold = 80  
@@ -62,7 +75,7 @@ def scaling_analysis(current_config, avg_utilization, instances):
         decision = "Upgrade"
     elif avg_utilization["vCPUs"] <= 40 and avg_utilization["memory_GiB"] <= 40:
         decision = "Downgrade"
-    elif savings > 5:  # Only suggest a downgrade if cost savings are significant
+    elif savings > 5:  
         decision = "Downgrade"
 
     return decision, optimal_config, optimal_cost, savings
@@ -101,13 +114,16 @@ if st.button("⚡ Optimize Resources"):
     st.subheader("📊 Optimization Results")
     st.write(f"**🚀 Scaling Decision:** {decision}")
     st.write(f"**💰 Current Cost (USD/hour):** {calculate_cost(current_config, instances):.2f}")
-    st.write(f"**🔍 Optimal Configuration:** {optimal_config}")
-    st.write(f"**💰 Optimized Cost (USD/hour):** {optimal_cost:.2f}")
-    st.write(f"**📉 Savings:** {savings:.2f} USD/hour")
+    if optimal_config:
+        st.write(f"**🔍 Optimal Configuration:** {optimal_config}")
+        st.write(f"**💰 Optimized Cost (USD/hour):** {optimal_cost:.2f}")
+        st.write(f"**📉 Savings:** {savings:.2f} USD/hour")
 
-    if decision == "Downgrade":
-        st.success(f"🎉 You can save **${savings:.2f}/hour** by switching to the suggested configuration!")
-    elif decision == "Upgrade":
-        st.warning(f"⚠️ An upgrade is recommended due to high resource utilization.")
+        if decision == "Downgrade":
+            st.success(f"🎉 You can save **${savings:.2f}/hour** by switching to the suggested configuration!")
+        elif decision == "Upgrade":
+            st.warning(f"⚠️ An upgrade is recommended due to high resource utilization.")
+        else:
+            st.info("✅ Your current configuration is already optimal!")
     else:
-        st.info("✅ Your current configuration is already optimal!")
+        st.error("⚠️ No valid optimization found. Consider upgrading resources.")
