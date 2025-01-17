@@ -1,0 +1,222 @@
+[
+    {
+        "instance_type": "t2.nano",
+        "vCPUs": 1,
+        "memory_GiB": 0.5,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 0.1,
+        "ebs_bandwidth_Gbps": 0.1,
+        "cpu_credits_per_hour": 3,
+        "on_demand_hourly_price_usd": 0.0058,
+        "reserved_1_year_hourly_price_usd": 0.003,
+        "reserved_3_year_hourly_price_usd": 0.002
+    },
+    {
+        "instance_type": "t2.micro",
+        "vCPUs": 1,
+        "memory_GiB": 1,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 0.1,
+        "ebs_bandwidth_Gbps": 0.1,
+        "cpu_credits_per_hour": 6,
+        "on_demand_hourly_price_usd": 0.0116,
+        "reserved_1_year_hourly_price_usd": 0.007,
+        "reserved_3_year_hourly_price_usd": 0.005
+    },
+    {
+        "instance_type": "t2.small",
+        "vCPUs": 1,
+        "memory_GiB": 2,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 0.2,
+        "ebs_bandwidth_Gbps": 0.2,
+        "cpu_credits_per_hour": 12,
+        "on_demand_hourly_price_usd": 0.023,
+        "reserved_1_year_hourly_price_usd": 0.014,
+        "reserved_3_year_hourly_price_usd": 0.009
+    },
+    {
+        "instance_type": "t2.medium",
+        "vCPUs": 2,
+        "memory_GiB": 4,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 0.25,
+        "ebs_bandwidth_Gbps": 0.25,
+        "cpu_credits_per_hour": 24,
+        "on_demand_hourly_price_usd": 0.0464,
+        "reserved_1_year_hourly_price_usd": 0.031,
+        "reserved_3_year_hourly_price_usd": 0.021
+    },
+    {
+        "instance_type": "t2.large",
+        "vCPUs": 2,
+        "memory_GiB": 8,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 0.5,
+        "ebs_bandwidth_Gbps": 0.5,
+        "cpu_credits_per_hour": 36,
+        "on_demand_hourly_price_usd": 0.0928,
+        "reserved_1_year_hourly_price_usd": 0.055,
+        "reserved_3_year_hourly_price_usd": 0.037
+    },
+    {
+        "instance_type": "t2.xlarge",
+        "vCPUs": 4,
+        "memory_GiB": 16,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 1,
+        "ebs_bandwidth_Gbps": 1,
+        "cpu_credits_per_hour": 54,
+        "on_demand_hourly_price_usd": 0.1856
+    },
+    {
+        "instance_type": "t2.2xlarge",
+        "vCPUs": 8,
+        "memory_GiB": 32,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 1,
+        "ebs_bandwidth_Gbps": 1,
+        "cpu_credits_per_hour": 81,
+        "on_demand_hourly_price_usd": 0.3712
+    },
+    {
+        "instance_type": "t3.nano",
+        "vCPUs": 2,
+        "memory_GiB": 0.5,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 5,
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 6,
+        "on_demand_hourly_price_usd": 0.0052
+    },
+    {
+        "instance_type": "t3.micro",
+        "vCPUs": 2,
+        "memory_GiB": 1,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 5,
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 12,
+        "on_demand_hourly_price_usd": 0.0104
+    },
+    {
+        "instance_type": "t3.small",
+        "vCPUs": 2,
+        "memory_GiB": 2,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 5,
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 24,
+        "on_demand_hourly_price_usd": 0.0209
+    },
+    {
+        "instance_type": "t3.medium",
+        "vCPUs": 2,
+        "memory_GiB": 4,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 5,
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 24,
+        "on_demand_hourly_price_usd": 0.0418
+    },
+    {
+        "instance_type": "t3.large",
+        "vCPUs": 2,
+        "memory_GiB": 8,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 5,
+        "ebs_bandwidth_Gbps": "Up to 2780",
+        "cpu_credits_per_hour": 36,
+        "on_demand_hourly_price_usd": 0.0835
+    },
+    {
+        "instance_type": "t3.xlarge",
+        "vCPUs": 4,
+        "memory_GiB": 16,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 5,
+        "ebs_bandwidth_Gbps": "Up to 2780",
+        "cpu_credits_per_hour": 96,
+        "on_demand_hourly_price_usd": 0.1670
+    },
+    {
+        "instance_type": "t3.2xlarge",
+        "vCPUs": 8,
+        "memory_GiB": 32,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": 5,
+        "ebs_bandwidth_Gbps": "Up to 2780",
+        "cpu_credits_per_hour": 192,
+        "on_demand_hourly_price_usd": 0.3341
+    },
+    {
+        "instance_type": "t4g.nano",
+        "vCPUs": 2,
+        "memory_GiB": 0.5,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": "Up to 5",
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 6,
+        "on_demand_hourly_price_usd": 0.0042
+    },
+    {
+        "instance_type": "t4g.micro",
+        "vCPUs": 2,
+        "memory_GiB": 1,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": "Up to 5",
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 12,
+        "on_demand_hourly_price_usd": 0.0084
+    }
+{
+        "instance_type": "t4g.small",
+        "vCPUs": 2,
+        "memory_GiB": 2,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": "Up to 5",
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 24,
+        "on_demand_hourly_price_usd": 0.0168
+    },
+    {
+        "instance_type": "t4g.medium",
+        "vCPUs": 2,
+        "memory_GiB": 4,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": "Up to 5",
+        "ebs_bandwidth_Gbps": "Up to 2085",
+        "cpu_credits_per_hour": 24,
+        "on_demand_hourly_price_usd": 0.0336
+    },
+    {
+        "instance_type": "t4g.large",
+        "vCPUs": 2,
+        "memory_GiB": 8,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": "Up to 5",
+        "ebs_bandwidth_Gbps": "Up to 2780",
+        "cpu_credits_per_hour": 36,
+        "on_demand_hourly_price_usd": 0.0672
+    },
+    {
+        "instance_type": "t4g.xlarge",
+        "vCPUs": 4,
+        "memory_GiB": 16,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": "Up to 5",
+        "ebs_bandwidth_Gbps": "Up to 2780",
+        "cpu_credits_per_hour": 96,
+        "on_demand_hourly_price_usd": 0.1344
+    },
+    {
+        "instance_type": "t4g.2xlarge",
+        "vCPUs": 8,
+        "memory_GiB": 32,
+        "instance_storage_GB": 0,
+        "network_bandwidth_Gbps": "Up to 5",
+        "ebs_bandwidth_Gbps": "Up to 2780",
+        "cpu_credits_per_hour": 192,
+        "on_demand_hourly_price_usd": 0.2688
+    }
+]
