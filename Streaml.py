@@ -4,7 +4,7 @@ import random
 import matplotlib.pyplot as plt
 
 def load_instances():
-    with open("tfamily.json", "r") as file:
+    with open("r3_instance_types.json", "r") as file:
         return json.load(file)
 
 def fitness(solution, instances, required_vCPUs, required_memory_GiB):
@@ -55,8 +55,16 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
     return best_config
 
 def calculate_cost(configuration, instances):
-    return sum(next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
-               for instance, count in configuration.items())
+    cost = 0
+    for instance, count in configuration.items():
+        # Find the instance data
+        instance_data = next((i for i in instances if i["instance_type"] == instance), None)
+        if instance_data:
+            cost += instance_data["on_demand_hourly_price_usd"] * count
+        else:
+            # Handle case where the instance is not found
+            st.warning(f"Warning: Instance type '{instance}' not found in the instance list.")
+    return cost
 
 def scaling_analysis(current_config, avg_utilization, instances):
     current_cost = calculate_cost(current_config, instances)
