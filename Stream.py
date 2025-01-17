@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import random
+import psutil
 import matplotlib.pyplot as plt
 
 def load_instances():
@@ -40,46 +41,65 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
         population = new_population
     return max(population, key=lambda x: fitness(x, instances, required_vCPUs, required_memory_GiB))
 
-def scaling_analysis(current_usage, required_resources):
-    vCPU_diff = required_resources["vCPUs"] - current_usage["vCPUs"]
-    memory_diff = required_resources["memory_GiB"] - current_usage["memory_GiB"]
-    if vCPU_diff > 0 or memory_diff > 0:
-        return "Upgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
-    elif vCPU_diff < -10 or memory_diff < -10:
-        return "Downgrade", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
-    return "Optimal", {"vCPUs": vCPU_diff, "memory_GiB": memory_diff}
+def calculate_cost(configuration, instances):
+    return sum(next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
+               for instance, count in configuration.items())
 
-st.title("Cloud Cost Optimization")
+def scaling_analysis(current_config, avg_utilization, instances):
+    current_cost = calculate_cost(current_config, instances)
+    optimal_config = genetic_algorithm(instances, avg_utilization["vCPUs"], avg_utilization["memory_GiB"])
+    optimal_cost = calculate_cost(optimal_config, instances)
+
+    savings = current_cost - optimal_cost
+    decision = "Optimal"
+    if savings > 0:
+        decision = "Downgrade"
+    elif savings < -10:
+        decision = "Upgrade"
+
+    return decision, optimal_config, optimal_cost, savings
+
+st.title("🔧 **Cloud Cost Optimization Using Genetic Algorithm**")
+
 instances = load_instances()
 
-current_vCPUs = st.number_input("Current vCPUs", value=10, step=1)
-current_memory_GiB = st.number_input("Current Memory (GiB)", value=127, step=1)
-instance_family = st.text_input("Instance Family (e.g., r3, m5)", value="r3")
+st.sidebar.header("🛠️ Current Configuration")
+current_cpu = st.sidebar.number_input("Current vCPUs", min_value=1, value=8)
+current_memory = st.sidebar.number_input("Current Memory (GiB)", min_value=1, value=16)
+current_instance_family = st.sidebar.text_input("Current Instance Family", "r3.large")
 
-cpu_utilization = st.number_input("CPU Utilization (%) - N Days Avg", value=70, step=1)
-memory_utilization = st.number_input("Memory Utilization (%) - N Days Avg", value=80, step=1)
+st.sidebar.header("📊 Utilization Data (N Days Avg)")
+avg_cpu_utilization = st.sidebar.number_input("Avg CPU Utilization (%)", min_value=1, max_value=100, value=65)
+avg_memory_utilization = st.sidebar.number_input("Avg Memory Utilization (%)", min_value=1, max_value=100, value=70)
 
-required_vCPUs = int(current_vCPUs * (cpu_utilization / 100))
-required_memory_GiB = int(current_memory_GiB * (memory_utilization / 100))
+required_vCPUs = int((avg_cpu_utilization / 100) * current_cpu)
+required_memory_GiB = int((avg_memory_utilization / 100) * current_memory)
 
-if st.button("Run Optimization"):
-    best_solution = genetic_algorithm(instances, required_vCPUs, required_memory_GiB)
-    decision, adjustment = scaling_analysis({"vCPUs": current_vCPUs, "memory_GiB": current_memory_GiB},
-                                            {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB})
-    total_cost = sum(next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
-                     for instance, count in best_solution.items())
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(["Current", "Optimized"], [current_cpu, required_vCPUs], marker='o', linestyle='-', label="vCPUs")
+ax.plot(["Current", "Optimized"], [current_memory, required_memory_GiB], marker='o', linestyle='-', label="Memory (GiB)")
+ax.set_xlabel("Configuration")
+ax.set_ylabel("Resources")
+ax.set_title("Current vs Optimized Resource Allocation")
+ax.legend()
+st.pyplot(fig)
 
-    st.subheader("Results")
-    st.write("**Scaling Decision:**", decision)
-    st.write("**Adjustment Needed:**", adjustment)
-    st.write("**Best Instance Combination:**", best_solution)
-    st.write("**Total Cost (USD/hour):**", total_cost)
+if st.button("⚡ Optimize Resources"):
+    current_config = {current_instance_family: 1}
+    avg_utilization = {"vCPUs": required_vCPUs, "memory_GiB": required_memory_GiB}
 
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.plot(["Current", "Optimized"], [current_vCPUs, required_vCPUs], marker='o', linestyle='-', label="vCPUs")
-    ax.plot(["Current", "Optimized"], [current_memory_GiB, required_memory_GiB], marker='o', linestyle='-', label="Memory (GiB)")
-    ax.set_xlabel("Configuration")
-    ax.set_ylabel("Resources")
-    ax.set_title("Current vs Optimized Resource Allocation")
-    ax.legend()
-    st.pyplot(fig)
+    decision, optimal_config, optimal_cost, savings = scaling_analysis(current_config, avg_utilization, instances)
+
+    st.subheader("📊 Optimization Results")
+    st.write(f"**🚀 Scaling Decision:** {decision}")
+    st.write(f"**💰 Current Cost (USD/hour):** {calculate_cost(current_config, instances):.2f}")
+    st.write(f"**🔍 Optimal Configuration:** {optimal_config}")
+    st.write(f"**💰 Optimized Cost (USD/hour):** {optimal_cost:.2f}")
+    st.write(f"**📉 Savings:** {savings:.2f} USD/hour")
+
+    if savings > 0:
+        st.success(f"🎉 You can save **${savings:.2f}/hour** by switching to the suggested configuration!")
+    elif savings < 0:
+        st.warning(f"⚠️ An upgrade is recommended, which will increase costs by **${-savings:.2f}/hour**.")
+    else:
+        st.info("✅ Your current configuration is already optimal!")
