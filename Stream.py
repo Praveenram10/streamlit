@@ -4,7 +4,7 @@ import random
 import matplotlib.pyplot as plt
 
 def load_instances():
-    with open("r3_instance_types.json", "r") as file:
+    with open("tfamily.json", "r") as file:
         return json.load(file)
 
 def fitness(solution, instances, required_vCPUs, required_memory_GiB):
