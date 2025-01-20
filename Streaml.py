@@ -55,7 +55,6 @@ current_instance_details = next(i for i in instances if i["instance_type"] == cu
 total_vCPUs = current_instance_details["vCPUs"] * current_instance_count
 total_memory = current_instance_details["memory_GiB"] * current_instance_count
 
-# Calculate required resources
 required_vCPUs = int((avg_cpu_utilization / 100) * total_vCPUs)
 required_memory = int((avg_memory_utilization / 100) * total_memory)
 
