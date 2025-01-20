@@ -98,7 +98,7 @@ instances = load_instances()
 st.sidebar.header("🛠️ Current Configuration")
 current_cpu = st.sidebar.number_input("Current vCPUs", min_value=1, value=16)
 current_memory = st.sidebar.number_input("Current Memory (GiB)", min_value=1, value=32)
-current_instance_family = st.sidebar.text_input("Current Instance Family", "r3.8xlarge")
+current_instance_family = st.sidebar.text_input("Current Instance Family", "t2.large")
 
 st.sidebar.header("📊 Utilization Data (N Days Avg)")
 avg_cpu_utilization = st.sidebar.number_input("Avg CPU Utilization (%)", min_value=1, max_value=100, value=90)
