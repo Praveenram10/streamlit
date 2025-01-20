@@ -4,7 +4,7 @@ import random
 import matplotlib.pyplot as plt
 
 def load_instances():
-    with open("tfamily.json", "r") as file:
+    with open("r3_instance_types.json", "r") as file:
         return json.load(file)
 
 def fitness(solution, instances, required_vCPUs, required_memory_GiB):
@@ -77,7 +77,10 @@ def scaling_analysis(current_config, avg_utilization, instances):
     else:
         decision = "Optimal"
 
-    return decision, optimal_config, optimal_cost, savings
+    # Filter out instances with 0 quantity
+    optimal_config_filtered = {instance: count for instance, count in optimal_config.items() if count > 0}
+
+    return decision, optimal_config_filtered, optimal_cost, savings
 
 st.title("🔧 **Cloud Cost Optimization Using Genetic Algorithm**")
 
