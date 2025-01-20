@@ -55,16 +55,8 @@ def genetic_algorithm(instances, required_vCPUs, required_memory_GiB, pop_size=2
     return best_config
 
 def calculate_cost(configuration, instances):
-    cost = 0
-    for instance, count in configuration.items():
-        # Find the instance data
-        instance_data = next((i for i in instances if i["instance_type"] == instance), None)
-        if instance_data:
-            cost += instance_data["on_demand_hourly_price_usd"] * count
-        else:
-            # Handle case where the instance is not found
-            st.warning(f"Warning: Instance type '{instance}' not found in the instance list.")
-    return cost
+    return sum(next(i["on_demand_hourly_price_usd"] for i in instances if i["instance_type"] == instance) * count
+               for instance, count in configuration.items())
 
 def scaling_analysis(current_config, avg_utilization, instances):
     current_cost = calculate_cost(current_config, instances)
@@ -85,10 +77,7 @@ def scaling_analysis(current_config, avg_utilization, instances):
     else:
         decision = "Optimal"
 
-    # Filter out instances with 0 quantity
-    optimal_config_filtered = {instance: count for instance, count in optimal_config.items() if count > 0}
-
-    return decision, optimal_config_filtered, optimal_cost, savings
+    return decision, optimal_config, optimal_cost, savings
 
 st.title("🔧 **Cloud Cost Optimization Using Genetic Algorithm**")
 
